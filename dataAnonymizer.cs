@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MySql.Data.MySqlClient;
 
 // Jamil Credit Institution - Data Anonymization Techniques
@@ -31,25 +31,28 @@ namespace codeObfuscation
                 if (userChoice == "yes" || userChoice == "y")
                 {
                     // Login with an existing account
-                    Login();
+                    Login(name);
                 }
                 else if (userChoice == "no" || userChoice == "n")
                 {
                     // Create a new account and then log in
                     if (Register(name))
                     {
-                        Login();
+                        Login(name);
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Invalid input. Please enter 'Yes' or 'No'.");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write("Invalid input. ");
+                    Console.ResetColor();
+                    Console.WriteLine("Please enter 'Yes' or 'No'.");
                 }
 
             } while (userChoice != "yes" && userChoice != "no");
         }
 
-        static void Login()
+        static void Login(string name)
         {
             Console.WriteLine("Please enter your email:");
             string email = Console.ReadLine();
@@ -59,7 +62,11 @@ namespace codeObfuscation
 
             if (ValidateLogin(email, userPin))
             {
-                Console.WriteLine("Login successful! Welcome back.");
+                Console.Write("Login successful! Welcome back, ");
+                Console.ForegroundColor = ConsoleColor.DarkYellow;
+                Console.Write($"{CapitalizeFirstLetter(name)}");
+                Console.ResetColor();
+                Console.Write(".");
             }
             else
             {
@@ -86,11 +93,13 @@ namespace codeObfuscation
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Invalid Pin. Pin must be 4 digits.");
                 Console.ResetColor();
-                return false; // Account creation failed
+                return false; // Denotes account creation failed
             }
             else
             {
-                maskedPin = new string('*', userPin.Length - 3) + userPin.Substring(userPin.Length - 3);
+                //Obfuscates pin data
+                maskedPin = new string('*', userPin.Length);
+
 
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.WriteLine(maskedPin);
@@ -99,7 +108,7 @@ namespace codeObfuscation
                 Console.WriteLine("Database connection established.");
 
                 // Connect to the MySQL database
-                string connectionString = "server=localhost;database=dataAnonymizer;uid=root;password=positions;";
+                string connectionString = "server=localhost;database=dataAnonymizer;uid=root;password=your_password;";
                 using (MySqlConnection connection = new MySqlConnection(connectionString))
                 {
                     connection.Open();
@@ -111,11 +120,12 @@ namespace codeObfuscation
                         createTableCmd.ExecuteNonQuery();
                     }
 
-                    // Obfuscate data
-                    string username = email.Substring(0, 3);
-                    int maskedUsernameLength = email.IndexOf('@') - 3;
+                    // Obfuscate data for display
+                    string username = email.Substring(0, 1);
+                    int maskedUsernameLength = email.Length - 1;
                     string maskedUsername = new string('*', maskedUsernameLength >= 0 ? maskedUsernameLength : 0);
                     string domain = email.Substring(email.IndexOf('@'));
+
 
                     // Insert exactly as entered data into the Users table
                     string insertDataQuery = "INSERT INTO Users (Name, Email, Pin) VALUES (@Name, @Email, @Pin)";
@@ -126,8 +136,10 @@ namespace codeObfuscation
                         insertDataCmd.Parameters.AddWithValue("@Pin", ObfuscatePin(userPin));
                         insertDataCmd.ExecuteNonQuery();
                     }
-
-                    Console.WriteLine("Account created successfully! You can now log in.");
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.Write($"{CapitalizeFirstLetter(name)}");
+                    Console.ResetColor();
+                    Console.WriteLine(", your account was created successfully! You can now log in.");
                     return true; // Account creation succeeded
                 }
             }
@@ -135,7 +147,7 @@ namespace codeObfuscation
 
         static bool ValidateLogin(string email, string userPin)
         {
-            string connectionString = "server=localhost;database=dataAnonymizer;uid=root;password=positions;";
+            string connectionString = "server=localhost;database=dataAnonymizer;uid=root;password=your_password;";
 
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
@@ -160,10 +172,7 @@ namespace codeObfuscation
         {
             // Obfuscate the pin as needed for display
             // You can customize this method based on your obfuscation requirements for display
-            string obfuscatedPin = new string('*', userPin.Length - 1) + userPin[userPin.Length - 1];
-
-            // Store the pin exactly as entered in the database
-            return userPin;
+            return new string('*', userPin.Length);
         }
 
 
@@ -182,4 +191,3 @@ namespace codeObfuscation
         }
     }
 }
-
